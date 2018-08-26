@@ -1,14 +1,14 @@
 //TODO
 
 //1. Little stuff
-//	pause: esc to pause game
-//	make invader types different/ sprites change on move
-//  Display score and lives at top
+// make invader types different/ sprites change on move
+// Shift invader starting positions right a bit
+// Make invaders bigger
 
 //2/3. Make player able to die/ Make enemies shoot.
 //4. Add barriers.
 //5. Add bonus ships
-//6. Add game over text / Restart handling.
+//6. Add game over text / Restart handling. / save hi-score as cookie
 
 
 //Player Object
@@ -138,7 +138,7 @@ function Enemy(startX,startY,type) {
 	this.yDistance = 30; 
 	
 	//Type of enemy used
-	this.type = 1;
+	this.type = type;
 	
 	//Sprites used by game 
 	this.img1 = new Image();
@@ -370,6 +370,15 @@ function gameController() {
 		ctx.fillText("SCORE: " + this.score,10,25); 
 		ctx.fillText("HI-SCORE: " + this.score,450,25);
 		//draw lives
+		
+		ctx.beginPath();
+		ctx.rect(905, 15, 27, 15);
+		ctx.rect(905 + 10, 15 + -8, 7.5, 15);
+		ctx.fillStyle = "white";
+		ctx.fill();
+		ctx.closePath();
+		ctx.fillText("X" + this.lives ,940,25);
+		
 		
 		//draw extra text if paused
 		if (this.paused == true){
