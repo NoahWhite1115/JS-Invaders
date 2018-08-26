@@ -1,4 +1,7 @@
 //TODO
+
+//0. Refactor and comment
+
 //1. Display score and lives at top
 //2. Make player able to die
 //3. Make enemies shoot.
@@ -7,7 +10,10 @@
 //6. Add game over text. 
 
 
+//Player Object
+//Represents the player
 function Player(startX,startY) {
+	//starting position
 	this.x = startX;
 	this.y = startY;
 	
@@ -24,8 +30,10 @@ function Player(startX,startY) {
 	//horizontal speed
 	this.x_speed = 3;
 	
+	//bullet object 
 	this.bullet = undefined;
 	
+	//draws the player object each frame
 	this.draw = function() {
 		ctx.beginPath();
 		ctx.rect(this.x, this.y, this.width1, this.height1);
@@ -39,7 +47,8 @@ function Player(startX,startY) {
 		}
 	};
 
-	//Passed 2 (x,y) pairs, it determines if any part of the rectangle formed by the two intersects with the character
+	//Passed 2 (x,y) pairs, it determines if any part of the rectangle formed by the two intersects with the player sprite
+	//Needs work!
 	this.inHitbox = function(x1,y1,x2,y2) {
 		if ((this.x < x1 && this.x + this.width1 > x1) || (this.x < x2 && this.x + this.width1 > x2)){
 			if ((this.y < y1 && this.y + this.height1 > y1) || (this.y < y2 && this.y + this.height1 > y2)){
@@ -50,18 +59,21 @@ function Player(startX,startY) {
 		return false; 
 	}
 	
+	//Moves left by this.x_speed
 	this.moveLeft = function() {
 		if (this.x > 0){ 
 			this.x -= this.x_speed;
 		}
 	}
 	
+	//Moves right by this.x_speed
 	this.moveRight = function() {
 		if (this.x + this.width1 < canvas.width){ 
 			this.x += this.x_speed;
 		}
 	}
 	
+	//Spawns PlayerBullet
 	this.shoot = function() {
 		if (this.bullet == undefined){
 			this.bullet = new PlayerBullet(this.x,this.y + this.y_offset);
@@ -70,14 +82,25 @@ function Player(startX,startY) {
 	
 }
 
+//PlayerBullet Object
+//Represents the objects fired by the player
 function PlayerBullet(startX,startY) {
+	//starting position
 	this.x = startX;
 	this.y = startY;
+	
+	//offset accounts for player's width
 	this.x_offset = 15;
+	
+	//How fast the bullet moves in the y direction
 	this.move_speed = 6;
+	
+	//bullet size
 	this.width = 5;
 	this.height = 10;
 	
+	//draw function
+	//Draws the bullet each frame
 	this.draw = function(){
 		this.y -= this.move_speed;
 				
@@ -89,22 +112,32 @@ function PlayerBullet(startX,startY) {
 	}
 }
 
+//Enemy object
+//Represents the various enemies at the top of the screen 
 function Enemy(startX,startY,type) {
+	//Starting position
 	this.x = startX;
 	this.y = startY;
+	
+	//Enemy size 
 	this.width = 20;
 	this.height = 20;
+	
+	//Move distances for enemies
 	this.xDistance = 20;
 	this.yDistance = 30; 
+	
+	//Sprites used by game 
 	this.img1 = new Image();
 	this.img1.src = "invader" + type + "1.png";
 	this.img2 = new Image();
 	this.img2.src = "invader" + type + "2.png";
 	
+	//type of enemy used 
 	this.type = type;
 	
+	//What motion the enemy is making
 	this.drawState = 1;
-	this.state = "alive";
 	
 	//Passed 2 (x,y) pairs, it determines if any part of the rectangle formed by the two intersects with the character
 	this.inHitbox = function(x1,y1,x2,y2) {
@@ -119,12 +152,15 @@ function Enemy(startX,startY,type) {
 		return false; 
 	}
 	
+	//Draws the enemy each frame 
+	//Needs work!
 	this.draw = function(){
 		if (this.drawState == 1){
 			ctx.drawImage(this.img1,this.x,this.y,this.width,this.height);
 		}
 	}
 	
+	//Moves the enemy
 	this.move = function(direction){
 		if (direction == "right"){
 			this.x += this.xDistance;
@@ -137,6 +173,7 @@ function Enemy(startX,startY,type) {
 		}
 	}
 	
+	//Handles shooting for the enemy object, spawning an EnemyBullet
 	this.shoot = function(){
 		if (this.bullet == undefined){
 			this.bullet = new EnemyBullet(this.x,this.y);
@@ -144,6 +181,8 @@ function Enemy(startX,startY,type) {
 	}
 }
 
+//EnemyBullet object
+//Represents enemy bullets 
 function EnemyBullet(startX,startY) {
 	this.x = startX;
 	this.y = startY;
@@ -152,6 +191,7 @@ function EnemyBullet(startX,startY) {
 	this.width = 5;
 	this.height = 10;
 	
+	//moves and draws the bullet object
 	this.draw = function(){
 		this.y += this.move_speed;
 				
@@ -169,7 +209,9 @@ function gameController() {
 	this.waveSpeed = 2;
 	this.rightPressed = false;
 	this.leftPressed = false;
-	this.player = new Player((canvas.width-35)/2,canvas.height-25);
+	this.player = undefined;
+	this.gameStarted = false; 
+	
 
 	this.rightBoundary = 950;
 	this.leftBoundary = 40;
@@ -322,6 +364,11 @@ function gameController() {
 	}
 	
 	this.mainLoop = function() {
+		if (this.gameStarted == false){
+			this.gameStarted = true;
+			this.player = new Player((canvas.width-35)/2,canvas.height-25);
+		}
+		
 		if (this.waveActive == false){
 			this.newWave()
 			this.waveActive = true;
