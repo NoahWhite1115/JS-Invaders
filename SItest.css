@@ -1,0 +1,21 @@
+body{
+	background: black;
+	color: white;
+}
+
+h1{
+	display: block;
+	text-align: center;
+}
+
+img{
+	display: none;
+}
+
+#mainCanvas{
+	border: 1px solid white;
+	margin: auto;
+	display: block;
+}
+
+
