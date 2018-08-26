@@ -1,10 +1,14 @@
 //TODO
-//1. Display score and lives at top
-//2. Make player able to die
-//3. Make enemies shoot.
+
+//1. Little stuff
+//	pause: esc to pause game
+//	make invader types different/ sprites change on move
+//  Display score and lives at top
+
+//2/3. Make player able to die/ Make enemies shoot.
 //4. Add barriers.
 //5. Add bonus ships
-//6. Add game over text. 
+//6. Add game over text / Restart handling.
 
 
 //Player Object
@@ -231,7 +235,10 @@ function gameController() {
 	
 	//true if wave of enemies has spawned 
 	this.waveActive = false;
-
+	
+	//true if game is paused
+	this.paused = false; 
+	
 	//Number of enemy rows and columns
 	this.enemyColumns = 11;
 	this.enemyRows = 5;
@@ -364,6 +371,11 @@ function gameController() {
 		ctx.fillText("HI-SCORE: " + this.score,450,25);
 		//draw lives
 		
+		//draw extra text if paused
+		if (this.paused == true){
+			ctx.fillText("PAUSED",475,375);
+		}
+		
 		//draw player
 		this.player.draw();
 		
@@ -392,6 +404,14 @@ function gameController() {
 		}
 		else if(e.keyCode == 32) {
 			this.player.shoot();
+		}
+		else if(e.keyCode == 27) {
+			if (this.paused == true){
+				this.paused = false;
+			}
+			else{
+				this.paused = true; 
+			}
 		};
 	}
 	
@@ -419,54 +439,56 @@ function gameController() {
 			this.waveActive = true;
 		}
 		
-		//Handle player movement. 
-		if (this.rightPressed == true){
-			this.player.moveRight();
-		}
-		if (this.leftPressed == true){
-			this.player.moveLeft();
-		}
+		if (this.paused == false){
 		
-		//Move the enemies every this.enemyDefaultTime frames
-		this.enemyTime -= 1;
-		if (this.enemyTime == 0) {
-				
-			//Update enemy movement directions 
-			if (this.direction == "down"){
-				this.direction = this.nextDir;
+			//Handle player movement. 
+			if (this.rightPressed == true){
+				this.player.moveRight();
 			}
-			if (this.direction == "left"){
-				if (this.checkLeft() == true){
-					this.direction = "down";
-					this.nextDir = "right";
-				}
-			}
-			if (this.direction == "right"){
-				if (this.checkRight() == true){
-					this.direction = "down";
-					this.nextDir = "left";
-				}
-			}
-
-			//update all enemies to move to new position
-			for (var i = 0; i< this.enemyColumns; i++){
-				for(var j = 0; j < this.enemyRows; j++){
-					if (this.enemiesList[i][j] != undefined){
-						this.enemiesList[i][j].move(this.direction);
-					}
-				}
+			if (this.leftPressed == true){
+				this.player.moveLeft();
 			}
 			
-			//reset frames till move
-			this.enemyTime = this.enemyDefaultTime;
+			//Move the enemies every this.enemyDefaultTime frames
+			this.enemyTime -= 1;
+			if (this.enemyTime == 0) {
+					
+				//Update enemy movement directions 
+				if (this.direction == "down"){
+					this.direction = this.nextDir;
+				}
+				if (this.direction == "left"){
+					if (this.checkLeft() == true){
+						this.direction = "down";
+						this.nextDir = "right";
+					}
+				}
+				if (this.direction == "right"){
+					if (this.checkRight() == true){
+						this.direction = "down";
+						this.nextDir = "left";
+					}
+				}
+
+				//update all enemies to move to new position
+				for (var i = 0; i< this.enemyColumns; i++){
+					for(var j = 0; j < this.enemyRows; j++){
+						if (this.enemiesList[i][j] != undefined){
+							this.enemiesList[i][j].move(this.direction);
+						}
+					}
+				}
+				
+				//reset frames till move
+				this.enemyTime = this.enemyDefaultTime;
+			}
+			
+			//If a player bullet exists, check for collision with enemy objects 
+			if (this.player.bullet != undefined){
+				this.player.bullet.move();
+				this.checkEnemyCollisions();
+			}
 		}
-		
-		//If a player bullet exists, check for collision with enemy objects 
-		if (this.player.bullet != undefined){
-			this.player.bullet.move();
-			this.checkEnemyCollisions();
-		}
-		
 		//draw all changes
 		this.draw();
 	};
