@@ -1,7 +1,4 @@
 //TODO
-
-//0. Refactor and comment
-
 //1. Display score and lives at top
 //2. Make player able to die
 //3. Make enemies shoot.
@@ -12,6 +9,7 @@
 
 //Player Object
 //Represents the player
+//Takes a starting position (x and y)
 function Player(startX,startY) {
 	//starting position
 	this.x = startX;
@@ -42,6 +40,8 @@ function Player(startX,startY) {
 		ctx.fill();
 		ctx.closePath();
 		
+		//handles bullet object deletion
+		//Should be moved elsewhere
 		if (this.bullet != undefined && this.bullet.y < 0){
 			this.bullet = undefined; 
 		}
@@ -84,6 +84,7 @@ function Player(startX,startY) {
 
 //PlayerBullet Object
 //Represents the objects fired by the player
+//Takes a starting position (x and y)
 function PlayerBullet(startX,startY) {
 	//starting position
 	this.x = startX;
@@ -102,7 +103,6 @@ function PlayerBullet(startX,startY) {
 	//draw function
 	//Draws the bullet each frame
 	this.draw = function(){
-		this.y -= this.move_speed;
 				
 		ctx.beginPath();
 		ctx.rect(this.x + this.x_offset, this.y, this.width, this.height);
@@ -110,10 +110,16 @@ function PlayerBullet(startX,startY) {
 		ctx.fill();
 		ctx.closePath();
 	}
+	
+	//move bullet
+	this.move = function(){
+		this.y -= this.move_speed;
+	}
 }
 
 //Enemy object
 //Represents the various enemies at the top of the screen 
+//Takes a starting position (x and y) and enemy type (1-3)
 function Enemy(startX,startY,type) {
 	//Starting position
 	this.x = startX;
@@ -127,14 +133,14 @@ function Enemy(startX,startY,type) {
 	this.xDistance = 20;
 	this.yDistance = 30; 
 	
+	//Type of enemy used
+	this.type = 1;
+	
 	//Sprites used by game 
 	this.img1 = new Image();
-	this.img1.src = "invader" + type + "1.png";
+	this.img1.src = "invader" + this.type + "1.png";
 	this.img2 = new Image();
-	this.img2.src = "invader" + type + "2.png";
-	
-	//type of enemy used 
-	this.type = type;
+	this.img2.src = "invader" + this.type + "2.png";
 	
 	//What motion the enemy is making
 	this.drawState = 1;
@@ -161,6 +167,7 @@ function Enemy(startX,startY,type) {
 	}
 	
 	//Moves the enemy
+	//inputs are "right", "left" or "down"
 	this.move = function(direction){
 		if (direction == "right"){
 			this.x += this.xDistance;
@@ -203,38 +210,60 @@ function EnemyBullet(startX,startY) {
 	}
 }
 
+//gameController object
+//Handles the control flow of the game 
 function gameController() {
+	//current score
 	this.score = 0;
+	
+	//player lives
 	this.lives = 3;
-	this.waveSpeed = 2;
+	
+	//movement variables 
 	this.rightPressed = false;
 	this.leftPressed = false;
+	
+	//Player object 
 	this.player = undefined;
+	
+	//true if player object is not destroyed
 	this.gameStarted = false; 
 	
-
-	this.rightBoundary = 950;
-	this.leftBoundary = 40;
-	
+	//true if wave of enemies has spawned 
 	this.waveActive = false;
 
+	//Number of enemy rows and columns
 	this.enemyColumns = 11;
 	this.enemyRows = 5;
+	
+	//List that holds enemies
 	this.enemiesList = [];
+	
+	//Vars for placement of enemies in their waves at start
 	this.enemyRowSpacingX = 50;
 	this.enemyStartSpacingX = 235;
 	this.enemyRowSpacingY = 50;
 	this.enemyStartSpacingY = 60; 
+	
+	//Movement boundaries for enemies to left and right
+	this.rightBoundary = 950;
+	this.leftBoundary = 40;
+	
+	//Timing between enemy movements 
 	this.enemyDefaultTime = 80;
 	this.enemyTime = this.enemyDefaultTime;
-	this.direction = "right";
 
+	//Spawn a new wave
 	this.newWave = function() {
 
+		//direction invaders move in
 		this.direction = "right";
+		
+		//Loop spawns enemies in lists by column. 
+		//It's row/column rather than the traditional col/row to make the right and left boundary checks easier 
 		var x = this.enemyStartSpacingX;
-	
 		for (var i = 0; i< this.enemyColumns; i++){
+			//Add new column 
 			this.enemiesList[i] = [];
 			
 			var y = this.enemyStartSpacingY;
@@ -250,9 +279,8 @@ function gameController() {
 				if (j == 4){
 					var type = 2;
 				}
-				
-				var type = 1;
 
+				//Fill in enemies list 
 				this.enemiesList[i][j] = new Enemy(x,y,type);
 				y += this.enemyRowSpacingY;
 			}
@@ -262,27 +290,34 @@ function gameController() {
 
 	}
 	
+	//Checks if enemy is hit by bullet
 	this.checkEnemyCollisions = function(){
+		
+		//bullet boundaries
 		var x1 = this.player.bullet.x + this.player.bullet.x_offset;
 		var x2 = x1 + this.player.bullet.width;
 		var y1 = this.player.bullet.y;
 		var y2 = y1 + this.player.bullet.height;
 		
+		//check each enemy object to see if player bullet is colliding
 		for (var i = 0; i< this.enemyColumns; i++){
 			for(var j = 0; j < this.enemyRows; j++){
 				if (this.enemiesList[i][j] != undefined){
 					if (this.enemiesList[i][j].inHitbox(x1,y1,x2,y2)) {
+						
+						//if so, add to score, delete both bullet and enemy, update default time to go faster, then break
 						this.score += this.enemiesList[i][j].type *= 10;					
 						delete (this.enemiesList[i][j]);
 						delete this.player.bullet;
 						this.enemyDefaultTime -= 1;
-						
+						break; 
 					}
 				}
 			}
 		}
 	}
 	
+	//These two function check if the rightmost or leftmost enemies are at the rightmost or leftmost boundaries
 	this.checkLeft = function(){
 		for (var i = 0; i< this.enemyColumns; i++){
 			if (this.enemiesList[i] != []){
@@ -299,7 +334,6 @@ function gameController() {
 			}
 		}
 	}
-	
 	this.checkRight = function(){
 		for (var i = this.enemyColumns - 1; i >= 0; i--){
 			if (this.enemiesList[i] != []){
@@ -318,20 +352,27 @@ function gameController() {
 	}
 	
 	
+	//draw player, bullets and enemy objects 
 	this.draw = function(){
+		//Clears the screen 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		//Draw score, high score and lives 
 		ctx.font = "25px Inconsolata";
 		ctx.fillStyle = "white";
 		ctx.fillText("SCORE: " + this.score,10,25); 
-		//draw hi-score
+		ctx.fillText("HI-SCORE: " + this.score,450,25);
 		//draw lives
 		
+		//draw player
 		this.player.draw();
 		
+		//draw player bullet
 		if (this.player.bullet != undefined){
 			this.player.bullet.draw();
 		}
 		
+		//draw enemies 
 		for (var i = 0; i< this.enemyColumns; i++){
 			for(var j = 0; j < this.enemyRows; j++){
 				if (this.enemiesList[i][j] != undefined){
@@ -341,7 +382,7 @@ function gameController() {
 		}
 	}
 
-	
+	//Handles key inputs 
 	this.keyDownHandler = function(e) {
 		if(e.keyCode == 39) {
 			this.rightPressed = true;
@@ -354,6 +395,7 @@ function gameController() {
 		};
 	}
 	
+	//Handles key inputs 
 	this.keyUpHandler = function(e) {
 		if(e.keyCode == 39) {
 			this.rightPressed = false;
@@ -363,17 +405,21 @@ function gameController() {
 		}
 	}
 	
+	//Main loop of game, where the main control flow happens
 	this.mainLoop = function() {
+		//Check if player object is started. If not, make player object
 		if (this.gameStarted == false){
 			this.gameStarted = true;
 			this.player = new Player((canvas.width-35)/2,canvas.height-25);
 		}
 		
+		//Check if a new wave needs to be spawned. 
 		if (this.waveActive == false){
 			this.newWave()
 			this.waveActive = true;
 		}
 		
+		//Handle player movement. 
 		if (this.rightPressed == true){
 			this.player.moveRight();
 		}
@@ -381,20 +427,20 @@ function gameController() {
 			this.player.moveLeft();
 		}
 		
+		//Move the enemies every this.enemyDefaultTime frames
 		this.enemyTime -= 1;
 		if (this.enemyTime == 0) {
 				
+			//Update enemy movement directions 
 			if (this.direction == "down"){
 				this.direction = this.nextDir;
 			}
-			
 			if (this.direction == "left"){
 				if (this.checkLeft() == true){
 					this.direction = "down";
 					this.nextDir = "right";
 				}
 			}
-			
 			if (this.direction == "right"){
 				if (this.checkRight() == true){
 					this.direction = "down";
@@ -402,7 +448,7 @@ function gameController() {
 				}
 			}
 
-			
+			//update all enemies to move to new position
 			for (var i = 0; i< this.enemyColumns; i++){
 				for(var j = 0; j < this.enemyRows; j++){
 					if (this.enemiesList[i][j] != undefined){
@@ -411,20 +457,26 @@ function gameController() {
 				}
 			}
 			
-			
+			//reset frames till move
 			this.enemyTime = this.enemyDefaultTime;
 		}
 		
-		this.draw();
-		
+		//If a player bullet exists, check for collision with enemy objects 
 		if (this.player.bullet != undefined){
+			this.player.bullet.move();
 			this.checkEnemyCollisions();
 		}
+		
+		//draw all changes
+		this.draw();
 	};
 }
 
+//Canvas object to play the game in
 var canvas = document.querySelector("#mainCanvas");
+//Context object for canvas
 var ctx = canvas.getContext("2d");
+//New gameController
 var gc = new gameController();
 
 document.addEventListener("keydown", gc.keyDownHandler.bind(gc), false);
