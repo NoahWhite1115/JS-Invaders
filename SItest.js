@@ -138,7 +138,7 @@ function Enemy(startX,startY,type) {
 	this.yDistance = 30; 
 	
 	//Type of enemy used
-	this.type = type;
+	this.type = 1;
 	
 	//Sprites used by game 
 	this.img1 = new Image();
@@ -167,6 +167,10 @@ function Enemy(startX,startY,type) {
 	this.draw = function(){
 		if (this.drawState == 1){
 			ctx.drawImage(this.img1,this.x,this.y,this.width,this.height);
+		}
+		
+		if (this.bullet != undefined && this.bullet.y > 750){
+			delete this.bullet;
 		}
 	}
 	
@@ -243,6 +247,9 @@ function gameController() {
 	this.enemyColumns = 11;
 	this.enemyRows = 5;
 	
+	//There is a 'one in x' chance an enemy will shoot this time.
+	this.shot_chance = 2;
+	
 	//List that holds enemies
 	this.enemiesList = [];
 	
@@ -296,7 +303,7 @@ function gameController() {
 		}
 
 	}
-	
+
 	//Checks if enemy is hit by bullet
 	this.checkEnemyCollisions = function(){
 		
@@ -341,6 +348,7 @@ function gameController() {
 			}
 		}
 	}
+	
 	this.checkRight = function(){
 		for (var i = this.enemyColumns - 1; i >= 0; i--){
 			if (this.enemiesList[i] != []){
@@ -398,6 +406,9 @@ function gameController() {
 			for(var j = 0; j < this.enemyRows; j++){
 				if (this.enemiesList[i][j] != undefined){
 					this.enemiesList[i][j].draw();
+					if (this.enemiesList[i][j].bullet != undefined){
+						this.enemiesList[i][j].bullet.draw();
+					}
 				}
 			}
 		}
@@ -461,18 +472,34 @@ function gameController() {
 			//Move the enemies every this.enemyDefaultTime frames
 			this.enemyTime -= 1;
 			if (this.enemyTime == 0) {
+				
+				if (Math.floor(Math.random() * this.shot_chance) == 0){
+					//Get the columns with an enemy still in them.
+					var active_cols = [];
+					for (var i = 0; i< this.enemyColumns; i++){
+						for(var j = this.enemyRows; j >= 0; j--){
+							if (this.enemiesList[i][j] != undefined){
+								active_cols.push(this.enemiesList[i][j]);
+								break;
+							}
+						}
+					}
 					
+					var selected = Math.floor(Math.random() * active_cols.length);
+					active_cols[selected].shoot();
+				}
+				
 				//Update enemy movement directions 
 				if (this.direction == "down"){
 					this.direction = this.nextDir;
 				}
-				if (this.direction == "left"){
+				else if (this.direction == "left"){
 					if (this.checkLeft() == true){
 						this.direction = "down";
 						this.nextDir = "right";
 					}
 				}
-				if (this.direction == "right"){
+				else if (this.direction == "right"){
 					if (this.checkRight() == true){
 						this.direction = "down";
 						this.nextDir = "left";
