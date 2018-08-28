@@ -32,9 +32,6 @@ function Player(startX,startY) {
 	//horizontal speed
 	this.x_speed = 3;
 	
-	//bullet object 
-	this.bullet = undefined;
-	
 	//draws the player object each frame
 	this.draw = function() {
 		ctx.beginPath();
@@ -43,21 +40,16 @@ function Player(startX,startY) {
 		ctx.fillStyle = "white";
 		ctx.fill();
 		ctx.closePath();
-		
-		//handles bullet object deletion
-		//Should be moved elsewhere
-		if (this.bullet != undefined && this.bullet.y < 0){
-			this.bullet = undefined; 
-		}
 	};
 
 	//Passed 2 (x,y) pairs, it determines if any part of the rectangle formed by the two intersects with the player sprite
-	//Needs work!
 	this.inHitbox = function(x1,y1,x2,y2) {
-		if ((this.x < x1 && this.x + this.width1 > x1) || (this.x < x2 && this.x + this.width1 > x2)){
-			if ((this.y < y1 && this.y + this.height1 > y1) || (this.y < y2 && this.y + this.height1 > y2)){
-				return true;
-			}
+		if (
+		this.x < x2 &&
+		this.x + this.width1 > x1 &&
+		this.y < y2 && 
+		this.y + this.height1 > y1){
+			return true;
 		}
 		
 		return false; 
@@ -79,8 +71,8 @@ function Player(startX,startY) {
 	
 	//Spawns PlayerBullet
 	this.shoot = function() {
-		if (this.bullet == undefined){
-			this.bullet = new PlayerBullet(this.x,this.y + this.y_offset);
+		if (playerBullet == undefined){
+			playerBullet = new PlayerBullet(this.x,this.y + this.y_offset);
 		}
 	}
 	
@@ -169,9 +161,6 @@ function Enemy(startX,startY,type) {
 			ctx.drawImage(this.img1,this.x,this.y,this.width,this.height);
 		}
 		
-		if (this.bullet != undefined && this.bullet.y > 750){
-			delete this.bullet;
-		}
 	}
 	
 	//Moves the enemy
@@ -190,9 +179,7 @@ function Enemy(startX,startY,type) {
 	
 	//Handles shooting for the enemy object, spawning an EnemyBullet
 	this.shoot = function(){
-		if (this.bullet == undefined){
-			this.bullet = new EnemyBullet(this.x,this.y);
-		}
+		bulletList.push(new EnemyBullet(this.x,this.y));
 	}
 }
 
@@ -208,13 +195,17 @@ function EnemyBullet(startX,startY) {
 	
 	//moves and draws the bullet object
 	this.draw = function(){
-		this.y += this.move_speed;
+
 				
 		ctx.beginPath();
 		ctx.rect(this.x + this.x_offset, this.y, this.width, this.height);
 		ctx.fillStyle = "white";
 		ctx.fill();
 		ctx.closePath();
+	}
+	
+	this.move = function(){
+		this.y += this.move_speed;
 	}
 }
 
@@ -230,10 +221,7 @@ function gameController() {
 	//movement variables 
 	this.rightPressed = false;
 	this.leftPressed = false;
-	
-	//Player object 
-	this.player = undefined;
-	
+
 	//true if player object is not destroyed
 	this.gameStarted = false; 
 	
@@ -250,8 +238,8 @@ function gameController() {
 	//There is a 'one in x' chance an enemy will shoot this time.
 	this.shot_chance = 2;
 	
-	//List that holds enemies
-	this.enemiesList = [];
+	//Used to store wait times between death and rounds 
+	this.delay = -1;
 	
 	//Vars for placement of enemies in their waves at start
 	this.enemyRowSpacingX = 50;
@@ -278,7 +266,7 @@ function gameController() {
 		var x = this.enemyStartSpacingX;
 		for (var i = 0; i< this.enemyColumns; i++){
 			//Add new column 
-			this.enemiesList[i] = [];
+			enemiesList[i] = [];
 			
 			var y = this.enemyStartSpacingY;
 			
@@ -295,7 +283,7 @@ function gameController() {
 				}
 
 				//Fill in enemies list 
-				this.enemiesList[i][j] = new Enemy(x,y,type);
+				enemiesList[i][j] = new Enemy(x,y,type);
 				y += this.enemyRowSpacingY;
 			}
 			
@@ -308,21 +296,21 @@ function gameController() {
 	this.checkEnemyCollisions = function(){
 		
 		//bullet boundaries
-		var x1 = this.player.bullet.x + this.player.bullet.x_offset;
-		var x2 = x1 + this.player.bullet.width;
-		var y1 = this.player.bullet.y;
-		var y2 = y1 + this.player.bullet.height;
+		var x1 = playerBullet.x + playerBullet.x_offset;
+		var x2 = x1 + playerBullet.width;
+		var y1 = playerBullet.y;
+		var y2 = y1 + playerBullet.height;
 		
 		//check each enemy object to see if player bullet is colliding
 		for (var i = 0; i< this.enemyColumns; i++){
 			for(var j = 0; j < this.enemyRows; j++){
-				if (this.enemiesList[i][j] != undefined){
-					if (this.enemiesList[i][j].inHitbox(x1,y1,x2,y2)) {
+				if (enemiesList[i][j] != undefined){
+					if (enemiesList[i][j].inHitbox(x1,y1,x2,y2)) {
 						
 						//if so, add to score, delete both bullet and enemy, update default time to go faster, then break
-						this.score += this.enemiesList[i][j].type *= 10;					
-						delete (this.enemiesList[i][j]);
-						delete this.player.bullet;
+						this.score += enemiesList[i][j].type *= 10;					
+						enemiesList[i][j] = undefined;
+						playerBullet = undefined;
 						this.enemyDefaultTime -= 1;
 						break; 
 					}
@@ -331,13 +319,29 @@ function gameController() {
 		}
 	}
 	
+	this.checkPlayerCollisions = function(index){
+		
+		//bullet boundaries
+		var x1 = bulletList[index].x + bulletList[index].x_offset;
+		var x2 = x1 + bulletList[index].width;
+		var y1 = bulletList[index].y;
+		var y2 = y1 + bulletList[index].height;
+		
+		if (player.inHitbox(x1,y1,x2,y2)){
+			bulletList.splice(index, 1);
+			player = undefined;
+			this.lives -= 1;
+			this.gameStarted = false; 
+		}
+	}
+	
 	//These two function check if the rightmost or leftmost enemies are at the rightmost or leftmost boundaries
 	this.checkLeft = function(){
 		for (var i = 0; i< this.enemyColumns; i++){
-			if (this.enemiesList[i] != []){
+			if (enemiesList[i] != []){
 				for(var j = 0; j < this.enemyRows; j++){
-					if (this.enemiesList[i][j] != undefined){
-						if (this.enemiesList[i][j].x <= this.leftBoundary){
+					if (enemiesList[i][j] != undefined){
+						if (enemiesList[i][j].x <= this.leftBoundary){
 							return true;
 						}
 						else {
@@ -351,10 +355,10 @@ function gameController() {
 	
 	this.checkRight = function(){
 		for (var i = this.enemyColumns - 1; i >= 0; i--){
-			if (this.enemiesList[i] != []){
+			if (enemiesList[i] != []){
 				for(var j = 0; j < this.enemyRows; j++){
-					if (this.enemiesList[i][j] != undefined){
-						if (this.enemiesList[i][j].x >= this.rightBoundary){
+					if (enemiesList[i][j] != undefined){
+						if (enemiesList[i][j].x >= this.rightBoundary){
 							return true;
 						}
 						else {
@@ -377,8 +381,8 @@ function gameController() {
 		ctx.fillStyle = "white";
 		ctx.fillText("SCORE: " + this.score,10,25); 
 		ctx.fillText("HI-SCORE: " + this.score,450,25);
-		//draw lives
 		
+		//draw lives
 		ctx.beginPath();
 		ctx.rect(905, 15, 27, 15);
 		ctx.rect(905 + 10, 15 + -8, 7.5, 15);
@@ -387,30 +391,30 @@ function gameController() {
 		ctx.closePath();
 		ctx.fillText("X" + this.lives ,940,25);
 		
-		
 		//draw extra text if paused
 		if (this.paused == true){
 			ctx.fillText("PAUSED",475,375);
 		}
 		
 		//draw player
-		this.player.draw();
+		player.draw();
 		
 		//draw player bullet
-		if (this.player.bullet != undefined){
-			this.player.bullet.draw();
+		if (playerBullet != undefined){
+			playerBullet.draw();
 		}
 		
 		//draw enemies 
 		for (var i = 0; i< this.enemyColumns; i++){
 			for(var j = 0; j < this.enemyRows; j++){
-				if (this.enemiesList[i][j] != undefined){
-					this.enemiesList[i][j].draw();
-					if (this.enemiesList[i][j].bullet != undefined){
-						this.enemiesList[i][j].bullet.draw();
-					}
+				if (enemiesList[i][j] != undefined){
+					enemiesList[i][j].draw();
 				}
 			}
+		}
+		
+		for (var i = 0; i < bulletList.length; i++){
+			bulletList[i].draw();
 		}
 	}
 
@@ -423,7 +427,7 @@ function gameController() {
 			this.leftPressed = true;
 		}
 		else if(e.keyCode == 32) {
-			this.player.shoot();
+			player.shoot();
 		}
 		else if(e.keyCode == 27) {
 			if (this.paused == true){
@@ -450,44 +454,30 @@ function gameController() {
 		//Check if player object is started. If not, make player object
 		if (this.gameStarted == false){
 			this.gameStarted = true;
-			this.player = new Player((canvas.width-35)/2,canvas.height-25);
+			player = new Player((canvas.width-35)/2,canvas.height-25);
+			this.delay = 100; 
 		}
 		
 		//Check if a new wave needs to be spawned. 
 		if (this.waveActive == false){
 			this.newWave()
 			this.waveActive = true;
+			this.delay = 100; 
 		}
 		
-		if (this.paused == false){
+		if (this.paused == false && this.delay < 0){
 		
 			//Handle player movement. 
 			if (this.rightPressed == true){
-				this.player.moveRight();
+				player.moveRight();
 			}
 			if (this.leftPressed == true){
-				this.player.moveLeft();
+				player.moveLeft();
 			}
 			
 			//Move the enemies every this.enemyDefaultTime frames
 			this.enemyTime -= 1;
 			if (this.enemyTime == 0) {
-				
-				if (Math.floor(Math.random() * this.shot_chance) == 0){
-					//Get the columns with an enemy still in them.
-					var active_cols = [];
-					for (var i = 0; i< this.enemyColumns; i++){
-						for(var j = this.enemyRows; j >= 0; j--){
-							if (this.enemiesList[i][j] != undefined){
-								active_cols.push(this.enemiesList[i][j]);
-								break;
-							}
-						}
-					}
-					
-					var selected = Math.floor(Math.random() * active_cols.length);
-					active_cols[selected].shoot();
-				}
 				
 				//Update enemy movement directions 
 				if (this.direction == "down"){
@@ -509,9 +499,28 @@ function gameController() {
 				//update all enemies to move to new position
 				for (var i = 0; i< this.enemyColumns; i++){
 					for(var j = 0; j < this.enemyRows; j++){
-						if (this.enemiesList[i][j] != undefined){
-							this.enemiesList[i][j].move(this.direction);
+						if (enemiesList[i][j] != undefined){
+							enemiesList[i][j].move(this.direction);
 						}
+					}
+				}
+				
+				//Enemy Shooting
+				if (Math.floor(Math.random() * this.shot_chance) == 0){
+					//Get the columns with an enemy still in them.
+					var active_cols = [];
+					for (var i = 0; i< this.enemyColumns; i++){
+						for(var j = this.enemyRows; j >= 0; j--){
+							if (enemiesList[i][j] != undefined){
+								active_cols.push(enemiesList[i][j]);
+								break;
+							}
+						}
+					}
+					
+					if (active_cols.length != 0){
+						var selected = Math.floor(Math.random() * active_cols.length);
+						active_cols[selected].shoot();
 					}
 				}
 				
@@ -519,12 +528,34 @@ function gameController() {
 				this.enemyTime = this.enemyDefaultTime;
 			}
 			
-			//If a player bullet exists, check for collision with enemy objects 
-			if (this.player.bullet != undefined){
-				this.player.bullet.move();
-				this.checkEnemyCollisions();
+			//move the enemy bullets, check for collision and delete any past player
+			for(var i = 0; i < bulletList.length; i++){
+				bulletList[i].move();
+				
+				this.checkPlayerCollisions(i);
+				
+				//delete bullets if past player.
+				if (bulletList[i].y > 740){
+					bulletList.splice(i, 1);
+				}
 			}
+			
+			
+			
+			//If a player bullet exists, move, check for collision with enemy objects, and delete if past enemy 
+			if (playerBullet != undefined){
+				playerBullet.move();
+					
+				this.checkEnemyCollisions();
+
+				if (playerBullet.y < 35) {
+					playerBullet = undefined;
+				} 
+			}
+			
 		}
+		
+		this.delay -= 1;
 		//draw all changes
 		this.draw();
 	};
@@ -535,6 +566,13 @@ var canvas = document.querySelector("#mainCanvas");
 //Context object for canvas
 var ctx = canvas.getContext("2d");
 //New gameController
+
+var player = undefined;
+var playerBullet = undefined;
+
+var enemiesList = [];
+var bulletList = [];
+
 var gc = new gameController();
 
 document.addEventListener("keydown", gc.keyDownHandler.bind(gc), false);
