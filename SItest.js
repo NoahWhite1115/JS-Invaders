@@ -5,7 +5,7 @@
 // Shift invader starting positions right a bit
 // Make invaders bigger
 
-//2/3. Make player able to die/ Make enemies shoot.
+//2/3. Make death more natural
 //4. Add barriers.
 //5. Add bonus ships
 //6. Add game over text / Restart handling. / save hi-score as cookie
@@ -291,6 +291,29 @@ function gameController() {
 		}
 
 	}
+	
+	this.waveReset = function(){
+		//reset direction
+		this.direction = "right";
+
+		//
+		var x = this.enemyStartSpacingX;
+		for (var i = 0; i< this.enemyColumns; i++){
+			//
+			var y = this.enemyStartSpacingY;
+			for(var j = 0; j < this.enemyRows; j++){	
+				
+				if (enemiesList[i][j] != undefined){
+					enemiesList[i][j].x = x;
+					enemiesList[i][j].y = y; 
+				}
+				
+				y += this.enemyRowSpacingY;
+			}
+			
+			x += this.enemyRowSpacingX;
+		}
+	}
 
 	//Checks if enemy is hit by bullet
 	this.checkEnemyCollisions = function(){
@@ -397,8 +420,10 @@ function gameController() {
 		}
 		
 		//draw player
-		player.draw();
-		
+		if (player != undefined){
+			player.draw();
+		}
+	
 		//draw player bullet
 		if (playerBullet != undefined){
 			playerBullet.draw();
@@ -453,16 +478,24 @@ function gameController() {
 	this.mainLoop = function() {
 		//Check if player object is started. If not, make player object
 		if (this.gameStarted == false){
+			//lives check
+			
+			
+			//reset wave position here
+			if (this.waveActive == true){
+				this.waveReset();
+			}
+			
 			this.gameStarted = true;
 			player = new Player((canvas.width-35)/2,canvas.height-25);
-			this.delay = 100; 
+			this.delay = 200; 
 		}
 		
 		//Check if a new wave needs to be spawned. 
 		if (this.waveActive == false){
-			this.newWave()
+			this.newWave();
 			this.waveActive = true;
-			this.delay = 100; 
+			this.delay = 200; 
 		}
 		
 		if (this.paused == false && this.delay < 0){
@@ -535,12 +568,10 @@ function gameController() {
 				this.checkPlayerCollisions(i);
 				
 				//delete bullets if past player.
-				if (bulletList[i].y > 740){
+				if (bulletList[i] != undefined && bulletList[i].y > 740){
 					bulletList.splice(i, 1);
 				}
 			}
-			
-			
 			
 			//If a player bullet exists, move, check for collision with enemy objects, and delete if past enemy 
 			if (playerBullet != undefined){
