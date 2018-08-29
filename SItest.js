@@ -5,7 +5,6 @@
 // Shift invader starting positions right a bit
 // Make invaders bigger
 
-//2/3. Make death more natural
 //4. Add barriers.
 //5. Add bonus ships
 //6. Add game over text / Restart handling. / save hi-score as cookie
@@ -393,7 +392,6 @@ function gameController() {
 		}
 	}
 	
-	
 	//draw player, bullets and enemy objects 
 	this.draw = function(){
 		//Clears the screen 
@@ -417,6 +415,10 @@ function gameController() {
 		//draw extra text if paused
 		if (this.paused == true){
 			ctx.fillText("PAUSED",475,375);
+		}
+		//Get ready text
+		if (this.delay > 0){
+			ctx.fillText("GET READY",450,375);
 		}
 		
 		//draw player
@@ -494,6 +496,8 @@ function gameController() {
 		//Check if a new wave needs to be spawned. 
 		if (this.waveActive == false){
 			this.newWave();
+			//reset player position
+			player.x = (canvas.width-35)/2;
 			this.waveActive = true;
 			this.delay = 200; 
 		}
@@ -555,6 +559,10 @@ function gameController() {
 						var selected = Math.floor(Math.random() * active_cols.length);
 						active_cols[selected].shoot();
 					}
+					//check if wave is done. This isn't the best place to do it, but it works. 
+					else{
+						this.waveActive = false;
+					}
 				}
 				
 				//reset frames till move
@@ -579,7 +587,7 @@ function gameController() {
 					
 				this.checkEnemyCollisions();
 
-				if (playerBullet.y < 35) {
+				if (playerBullet != undefined && playerBullet.y < 35) {
 					playerBullet = undefined;
 				} 
 			}
