@@ -208,6 +208,54 @@ function EnemyBullet(startX,startY) {
 	}
 }
 
+function Barrier(x,y){
+	this.blockList = [];
+	this.width = 15;
+	this.height = 10;
+	
+	this.startX = x;
+	this.startY = y;
+	
+	//generate the blocks making up a barrier
+	this.generate = function(){
+		var y = this.startY;
+		for (var i=0; i<4; i++){
+			var x = this.startX; 
+			for (var j=0; j<4; j++){
+				//generate the blocks, skipping 2 in the last row
+				if (i != 3 || (j != 1 && j != 2)){
+					this.blockList.push(new BarrierBlock(x,y,this.width,this.height));
+				}
+				
+				x += this.width; 
+			}
+		
+			y += this.height;
+		}
+	}
+	
+	this.draw = function(){
+		for (var i = 0; i < this.blockList.length; i++){
+			this.blockList[i].draw();
+		}
+	}
+}
+
+function BarrierBlock(x,y,width,height){
+	this.x = x;
+	this.y = y;
+	this.width = width;
+	this.height = height;
+	
+	this.draw = function(){
+		ctx.beginPath();
+		ctx.rect(this.x, this.y, this.width, this.height);
+		ctx.fillStyle = "white";
+		ctx.fill();
+		ctx.closePath();
+	}
+}
+
 //gameController object
 //Handles the control flow of the game 
 function gameController() {
@@ -246,12 +294,16 @@ function gameController() {
 	this.enemyRowSpacingY = 50;
 	this.enemyStartSpacingY = 60; 
 	
+	//vars for barrier spacing
+	this.barrierStartX = 150;
+	this.barrierSpacingX = 225;
+	
 	//Movement boundaries for enemies to left and right
 	this.rightBoundary = 950;
 	this.leftBoundary = 40;
 	
 	//Timing between enemy movements 
-	this.enemyDefaultTime = 80;
+	this.enemyDefaultTime = 40;
 	this.enemyTime = this.enemyDefaultTime;
 
 	//Spawn a new wave
@@ -314,6 +366,18 @@ function gameController() {
 		}
 	}
 
+	this.barrierReset = function(){
+		var x = this.barrierStartX; 
+		var y = 680;
+		
+		for (var i = 0; i < 4; i++){
+			barrierList.push(new Barrier(x,y))
+			barrierList[i].generate();
+			x += this.barrierSpacingX;
+			
+		}
+	}
+	
 	//Checks if enemy is hit by bullet
 	this.checkEnemyCollisions = function(){
 		
@@ -440,8 +504,14 @@ function gameController() {
 			}
 		}
 		
+		//draw bullets
 		for (var i = 0; i < bulletList.length; i++){
 			bulletList[i].draw();
+		}
+		
+		//draw barriers
+		for (var i = 0; i < barrierList.length; i++){
+			barrierList[i].draw();
 		}
 	}
 
@@ -480,13 +550,16 @@ function gameController() {
 	this.mainLoop = function() {
 		//Check if player object is started. If not, make player object
 		if (this.gameStarted == false){
-			//lives check
-			
-			
 			//reset wave position here
 			if (this.waveActive == true){
 				this.waveReset();
 			}
+			
+			//clear bullets
+			playerBullet = undefined;
+			bulletList = []; 
+			
+			this.barrierReset();
 			
 			this.gameStarted = true;
 			player = new Player((canvas.width-35)/2,canvas.height-25);
@@ -498,6 +571,12 @@ function gameController() {
 			this.newWave();
 			//reset player position
 			player.x = (canvas.width-35)/2;
+			//clear bullets
+			playerBullet = undefined;
+			bulletList = []; 
+			
+			this.enemyDefaultTime += 50; 
+			
 			this.waveActive = true;
 			this.delay = 200; 
 		}
@@ -611,6 +690,7 @@ var playerBullet = undefined;
 
 var enemiesList = [];
 var bulletList = [];
+var barrierList = [];
 
 var gc = new gameController();
 
