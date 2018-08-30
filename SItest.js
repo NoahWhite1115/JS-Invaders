@@ -294,10 +294,13 @@ function gameController() {
 	this.leftPressed = false;
 
 	//true if player object is not destroyed
-	this.gameStarted = false; 
+	this.playerActive = false; 
 	
 	//true if wave of enemies has spawned 
 	this.waveActive = false;
+	
+	//true if game has begun
+	this.gameStarted = false;
 	
 	//true if game is paused
 	this.paused = false; 
@@ -443,7 +446,7 @@ function gameController() {
 			bulletList.splice(index, 1);
 			player = undefined;
 			this.lives -= 1;
-			this.gameStarted = false; 
+			this.playerActive = false; 
 		}
 	}
 	
@@ -541,6 +544,12 @@ function gameController() {
 		}
 	}
 
+	this.drawTitle = function(){
+		ctx.font = "25px Inconsolata";
+		ctx.fillStyle = "white";
+		ctx.fillText("PRESS ESC TO START",375,600);	
+	}
+	
 	//Handles key inputs 
 	this.keyDownHandler = function(e) {
 		if(e.keyCode == 39) {
@@ -553,6 +562,7 @@ function gameController() {
 			player.shoot();
 		}
 		else if(e.keyCode == 27) {
+			console.log("ECS");
 			if (this.paused == true){
 				this.paused = false;
 			}
@@ -612,8 +622,18 @@ function gameController() {
 	
 	//Main loop of game, where the main control flow happens
 	this.mainLoop = function() {
+		if (this.gameStarted != true){
+			this.drawTitle();
+			
+			if (this.paused == true){
+				this.gameStarted = true;
+				this.paused = false;
+			}
+			return;
+		}
+		
 		//Check if player object is started. If not, make player object
-		if (this.gameStarted == false){
+		if (this.playerActive == false){
 			//reset wave position here
 			if (this.waveActive == true){
 				this.waveReset();
@@ -625,7 +645,7 @@ function gameController() {
 			
 			this.barrierReset();
 			
-			this.gameStarted = true;
+			this.playerActive = true;
 			player = new Player((canvas.width-35)/2,canvas.height-25);
 			this.delay = 200; 
 		}
