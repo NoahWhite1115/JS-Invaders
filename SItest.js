@@ -236,8 +236,20 @@ function Barrier(x,y){
 	
 	this.draw = function(){
 		for (var i = 0; i < this.blockList.length; i++){
-			this.blockList[i].draw();
+			if (this.blockList[i] != undefined){
+				this.blockList[i].draw();
+			}
 		}
+	}
+	
+	this.inHitbox = function(x1,y1,x2,y2){
+		for (var i = 0; i < this.blockList.length; i++){
+			if (this.blockList[i] != undefined && this.blockList[i].inHitbox(x1,y1,x2,y2) == true){
+				return i; 
+			}
+		}
+		
+		return null;
 	}
 }
 
@@ -254,6 +266,18 @@ function BarrierBlock(x,y,width,height){
 		ctx.fill();
 		ctx.closePath();
 	}
+	
+	this.inHitbox = function(x1,y1,x2,y2){
+		if (
+			this.x < x2 &&
+			this.x + this.width > x1 &&
+			this.y < y2 && 
+			this.y + this.height > y1){
+				return true;
+			}
+		
+			return false; 
+		}
 }
 
 //gameController object
@@ -369,6 +393,8 @@ function gameController() {
 	this.barrierReset = function(){
 		var x = this.barrierStartX; 
 		var y = 660;
+		
+		barrierList = [];
 		
 		for (var i = 0; i < 4; i++){
 			barrierList.push(new Barrier(x,y))
@@ -545,6 +571,44 @@ function gameController() {
 			this.leftPressed = false;
 		}
 	}
+
+
+	//check if bullets are in barrier
+	this.barrierCheck = function(){
+		
+		if (playerBullet != undefined){
+			//check player bullet
+			var x1 = playerBullet.x + playerBullet.x_offset;
+			var x2 = x1 + playerBullet.width;
+			var y1 = playerBullet.y;
+			var y2 = y1 + playerBullet.height;
+			
+			for (var i = 0; i < 4; i++){
+				var block = barrierList[i].inHitbox(x1,y1,x2,y2);
+				
+				if (block != null){
+					barrierList[i].blockList[block] = undefined;
+					playerBullet = undefined; 
+				}
+			}
+		}
+		
+		for(var i = 0; i < bulletList.length; i++){
+			var x1 = bulletList[i].x + bulletList[i].x_offset;
+			var x2 = x1 + bulletList[i].width;
+			var y1 = bulletList[i].y;
+			var y2 = y1 + bulletList[i].height;
+			
+			for (var j = 0; j < 4; j++){
+				var block = barrierList[j].inHitbox(x1,y1,x2,y2);
+				
+				if (block != null){
+					barrierList[j].blockList[block] = undefined;
+					bulletList.splice(i, 1); 
+				}
+			}
+		}
+	}
 	
 	//Main loop of game, where the main control flow happens
 	this.mainLoop = function() {
@@ -574,6 +638,8 @@ function gameController() {
 			//clear bullets
 			playerBullet = undefined;
 			bulletList = []; 
+			
+			this.barrierReset();
 			
 			this.enemyDefaultTime += 50; 
 			
@@ -671,6 +737,7 @@ function gameController() {
 				} 
 			}
 			
+			this.barrierCheck();
 		}
 		
 		this.delay -= 1;
