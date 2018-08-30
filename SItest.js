@@ -121,12 +121,12 @@ function Enemy(startX,startY,type) {
 	this.y = startY;
 	
 	//Enemy size 
-	this.width = 20;
-	this.height = 20;
+	this.width = 30;
+	this.height = 30;
 	
 	//Move distances for enemies
-	this.xDistance = 20;
-	this.yDistance = 30; 
+	this.xDistance = 30;
+	this.yDistance = 50; 
 	
 	//Type of enemy used
 	this.type = 1;
@@ -295,11 +295,11 @@ function gameController() {
 	this.enemyStartSpacingY = 60; 
 	
 	//vars for barrier spacing
-	this.barrierStartX = 150;
+	this.barrierStartX = 130;
 	this.barrierSpacingX = 225;
 	
 	//Movement boundaries for enemies to left and right
-	this.rightBoundary = 950;
+	this.rightBoundary = 930;
 	this.leftBoundary = 40;
 	
 	//Timing between enemy movements 
@@ -368,7 +368,7 @@ function gameController() {
 
 	this.barrierReset = function(){
 		var x = this.barrierStartX; 
-		var y = 680;
+		var y = 660;
 		
 		for (var i = 0; i < 4; i++){
 			barrierList.push(new Barrier(x,y))
