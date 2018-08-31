@@ -128,8 +128,11 @@ function Enemy(startX,startY,type) {
 	this.xDistance = 30;
 	this.yDistance = 50; 
 	
+	this.type = type + 1;
 	//Type of enemy used
-	this.type = 1;
+	if (this.type == 3){
+		this.type = 1;
+	}
 	
 	//Sprites used by game 
 	this.img1 = new Image();
@@ -159,7 +162,9 @@ function Enemy(startX,startY,type) {
 		if (this.drawState == 1){
 			ctx.drawImage(this.img1,this.x,this.y,this.width,this.height);
 		}
-		
+		else {
+			ctx.drawImage(this.img2,this.x,this.y,this.width,this.height);
+		}
 	}
 	
 	//Moves the enemy
@@ -174,6 +179,9 @@ function Enemy(startX,startY,type) {
 		if (direction == "down"){
 			this.y += this.yDistance; 
 		}
+		
+		this.drawState += 1;
+		this.drawState = this.drawState % 2; 
 	}
 	
 	//Handles shooting for the enemy object, spawning an EnemyBullet
@@ -505,10 +513,7 @@ function gameController() {
 		ctx.closePath();
 		ctx.fillText("X" + this.lives ,940,25);
 		
-		//draw extra text if paused
-		if (this.paused == true){
-			ctx.fillText("PAUSED",475,375);
-		}
+
 		//Get ready text
 		if (this.delay > 0){
 			ctx.fillText("GET READY",450,375);
@@ -542,6 +547,11 @@ function gameController() {
 		for (var i = 0; i < barrierList.length; i++){
 			barrierList[i].draw();
 		}
+		
+		//draw extra text if paused
+		if (this.paused == true){
+			ctx.fillText("PAUSED",475,375);
+		}
 	}
 
 	this.drawTitle = function(){
@@ -562,7 +572,6 @@ function gameController() {
 			player.shoot();
 		}
 		else if(e.keyCode == 27) {
-			console.log("ECS");
 			if (this.paused == true){
 				this.paused = false;
 			}
