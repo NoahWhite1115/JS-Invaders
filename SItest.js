@@ -498,8 +498,15 @@ function gameController() {
 		//Draw score, high score and lives 
 		ctx.font = "25px Inconsolata";
 		ctx.fillStyle = "white";
-		ctx.fillText("SCORE: " + this.score,10,25); 
-		ctx.fillText("HI-SCORE: " + this.score,450,25);
+		ctx.fillText("SCORE: " + this.score,10,25);
+
+		if (this.score >= hiscore){
+			var hiscore_text = this.score;
+		}
+		else{
+			hiscore_text = hiscore;
+		}
+		ctx.fillText("HI-SCORE: " + hiscore_text,450,25);
 		
 		//draw lives
 		ctx.beginPath();
@@ -566,7 +573,9 @@ function gameController() {
 			this.leftPressed = true;
 		}
 		else if(e.keyCode == 32) {
-			player.shoot();
+			if (player != undefined){
+				player.shoot();
+			}
 		}
 		else if(e.keyCode == 27) {
 			if (this.paused == true){
@@ -644,6 +653,16 @@ function gameController() {
 			if (this.lives < 0){
 				this.gameStarted = false;
 				this.paused = false;
+			
+				//save hi-score
+				if (this.score > hiscore){
+					hiscore = this.score;
+					   
+					var d = new Date();
+					d.setTime(d.getTime() + (7*24*60*60*1000));
+					var expires = "expires="+ d.toUTCString();
+					document.cookie = "hiscore =" + hiscore + ";" + expires + ";path=/"
+				}
 				
 				this.score = 0;
 				
@@ -661,6 +680,8 @@ function gameController() {
 				this.lives = 2;		
 
 				return; 
+				
+
 			}
 			
 			//reset wave position here
@@ -807,6 +828,14 @@ var playerBullet = undefined;
 var enemiesList = [];
 var bulletList = [];
 var barrierList = [];
+
+var cookies = document.cookie;
+var hiscore;
+
+if (cookies == ""){
+	hiscore = 0;
+}
+
 
 var gc = new gameController();
 
