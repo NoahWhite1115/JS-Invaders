@@ -128,11 +128,8 @@ function Enemy(startX,startY,type) {
 	this.xDistance = 30;
 	this.yDistance = 50; 
 	
-	this.type = type + 1;
 	//Type of enemy used
-	if (this.type == 3){
-		this.type = 1;
-	}
+	this.type = type + 1;
 	
 	//Sprites used by game 
 	this.img1 = new Image();
@@ -358,14 +355,14 @@ function gameController() {
 			
 			for(var j = 0; j < this.enemyRows; j++){	
 				//generate types
-				if (j == 0 || j == 1){
-					var type = 0;
+				if (j == 0){
+					var type = 2;
 				}
-				if (j == 2 || j == 3){
+				if (j == 1 || j == 2){
 					var type = 1;
 				}
-				if (j == 4){
-					var type = 2;
+				if (j == 3 || j == 4){
+					var type = 0;
 				}
 
 				//Fill in enemies list 
