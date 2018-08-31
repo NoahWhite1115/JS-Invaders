@@ -292,7 +292,7 @@ function gameController() {
 	this.score = 0;
 	
 	//player lives
-	this.lives = 3;
+	this.lives = 2;
 	
 	//movement variables 
 	this.rightPressed = false;
@@ -628,7 +628,7 @@ function gameController() {
 	
 	//Main loop of game, where the main control flow happens
 	this.mainLoop = function() {
-		if (this.gameStarted != true){
+		if (this.gameStarted == false){
 			this.drawTitle();
 			
 			if (this.paused == true){
@@ -640,6 +640,29 @@ function gameController() {
 		
 		//Check if player object is started. If not, make player object
 		if (this.playerActive == false){
+			//check lives
+			if (this.lives < 0){
+				this.gameStarted = false;
+				this.paused = false;
+				
+				this.score = 0;
+				
+				this.waveActive = false;
+				
+				player = undefined;
+				playerBullet = undefined; 
+				enemiesList = [];
+				barrierList = [];
+				bulletList = [];
+				
+				//Clears the screen 
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				
+				this.lives = 2;		
+
+				return; 
+			}
+			
 			//reset wave position here
 			if (this.waveActive == true){
 				this.waveReset();
