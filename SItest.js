@@ -661,7 +661,8 @@ function gameController() {
 					var d = new Date();
 					d.setTime(d.getTime() + (7*24*60*60*1000));
 					var expires = "expires="+ d.toUTCString();
-					document.cookie = "hiscore =" + hiscore + ";" + expires + ";path=/"
+					console.log("hiscore =" + hiscore + ";" + expires + ";");
+					document.cookie = "hiscore=" + hiscore + ";" + expires + ";"
 				}
 				
 				this.score = 0;
@@ -835,7 +836,9 @@ var hiscore;
 if (cookies == ""){
 	hiscore = 0;
 }
-
+else{
+	hiscore = parseInt(cookies.split("=")[1]);
+}
 
 var gc = new gameController();
 
